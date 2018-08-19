@@ -84,7 +84,8 @@ relationships =(
     ('GF', 'Grand Father - മുത്തച്ഛൻ'),
     ('GM', 'Grand Mother - മുത്തശ്ശി'),
     ('GS', 'Grand Son - കൊച്ചുമകൻ '),
-    ('GD', 'Grand Daughter - കൊച്ചുമകൾ ')
+    ('GD', 'Grand Daughter - കൊച്ചുമകൾ '),
+    ('OT', 'Other')
 )
 
 class Request(models.Model):
