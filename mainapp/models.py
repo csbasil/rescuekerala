@@ -3,6 +3,7 @@ import uuid
 from django.db import models
 from django.core.validators import RegexValidator
 from django.contrib.auth.models import User
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 districts = (
     ('alp','Alappuzha - ആലപ്പുഴ'),
@@ -72,7 +73,19 @@ announcement_priorities = [
     ('M', 'Medium'),
     ('L', 'Low')]
 
-
+relationships =(
+    ('FA','Father - അച്ഛൻ'),
+    ('MA','Mother - അമ്മ'),
+    ('SO','Son - മകൻ'),
+    ('DA', 'Daughter - മകൾ'),
+    ('BR', 'Brother - സഹോദരൻ'),
+    ('ST', 'Sister - സഹോദരി '),
+    ('WF', 'Wife - ഭാര്യ '),
+    ('GF', 'Grand Father - മുത്തച്ഛൻ'),
+    ('GM', 'Grand Mother - മുത്തശ്ശി'),
+    ('GS', 'Grand Son - കൊച്ചുമകൻ '),
+    ('GD', 'Grand Daughter - കൊച്ചുമകൾ ')
+)
 
 class Request(models.Model):
     district = models.CharField(
@@ -417,4 +430,65 @@ class ReliefCampData(models.Model):
         verbose_name_plural = 'Relief: Camp Datas'
 
     def __str__(self):
-        return self.description[:100]
+
+        return self.get_district_display()
+
+class SurvivedFamily(models.Model):
+    district = models.CharField(
+        max_length = 15,
+        choices= districts,
+        verbose_name='Districts - ജില്ല'
+    )
+    taluk = models.CharField(max_length=100, verbose_name="Taluk - താലൂക്ക്")
+    village = models.CharField(max_length=100, verbose_name="Village - വില്ലേജ്")
+    place = models.CharField(max_length=100, verbose_name="Your Native Place in Village  - വില്ലേജിൽ നിങ്ങളുടെ താമസസ്ഥലം")
+    name = models.CharField(max_length=100, verbose_name="Name - പേര്")
+    gender = models.IntegerField(
+        choices = gender,
+        verbose_name='Gender - ലിംഗം',
+    )
+    age = models.IntegerField(verbose_name="Age - വയസ് ")
+    uniqueid = models.CharField(max_length=100, unique=True, null=True, blank=True, verbose_name="Adhaar/Ration Card/Voters Id (Any one)- ആധാർ / റേഷൻകാർഡ് / വോട്ടർ ഐഡി  (ഏതങ്കിലും ഒന്ന് )")
+    housename = models.CharField(max_length=100, verbose_name="House Name  - വീട്ടുപേര് ")
+    pin = models.IntegerField(verbose_name="Pincode - പിൻകോഡ് ")
+    phone = models.IntegerField(unique=True, null=True,blank=True,verbose_name='Mobile - മൊബൈൽ')
+    address = models.TextField(max_length=500,null=True, blank=True, verbose_name='Address - വിലാസം ')
+    current_place = models.CharField(max_length=100, verbose_name="Now Staying at - ഇപ്പോൾ  താമസിക്കുന്ന സ്ഥലം")
+    updated_by = models.CharField(
+        max_length=100,
+        choices = (("S","self"),("V","volunteer")),
+        verbose_name="Updated By  - അപ്ഡേറ്റ്  ചെയുന്ന ആൾ "
+        )
+    class Meta:
+        verbose_name = 'Survived: Family'
+        verbose_name_plural = 'Survived: Families'
+
+class FamilyMember(models.Model):
+    family = models.ForeignKey(SurvivedFamily, on_delete=models.CASCADE, default=0)
+    name = models.CharField(max_length=100, verbose_name="Name - പേര്")
+    gender = models.IntegerField(
+        choices = gender,
+        verbose_name='Gender - ലിംഗം',
+    )
+    age = models.IntegerField(
+            validators=[
+                MaxValueValidator(100),
+                MinValueValidator(0)
+            ],
+            verbose_name="Age - വയസ് "
+            )
+    relation = models.CharField(
+        max_length = 3,
+        choices= relationships,
+        verbose_name='Relation - ബന്ധം'
+    )
+    uniqueid = models.CharField(max_length=100, unique=True, null=True, blank=True, verbose_name="Adhaar/Ration Card/Voters Id (Any one)- ആധാർ / റേഷൻകാർഡ് / വോട്ടർ ഐഡി  (ഏതങ്കിലും ഒന്ന് )")
+    staus = models.CharField (
+        max_length=1,
+        choices = (('S','Safe'),('M','Missing'),('D','Died'))
+    )
+    class Meta:
+        verbose_name = 'Family: Member'
+        verbose_name_plural = 'Family: Members'
+    def __str__(self):
+        return self.name

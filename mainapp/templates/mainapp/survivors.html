@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% load bootstrap3 %}
+{% load static %}
+{% block content %}
+<div class="container text-center">
+    <h1 class="main-logo">kerala<span style="font-weight: normal;">rescue</span></h1>
+    <p style="margin-bottom:20px;">
+        <i>An initiative by Govt. of Kerala, Kerala State IT Mission and IEEE Kerala Section<br>
+        For effective collaboration and communications between authorities, volunteers and public </i><br/>
+        <strong>ദുരിതാശ്വാസ പ്രവര്‍ത്തനങ്ങളും രക്ഷാ ദൗത്യങ്ങളും ഏകോപിപ്പിക്കാന്‍</strong><br/>
+    <b><a href="{% static 'images/msg_cm.jpg' %}">Message from Hon. Chief Minister of Kerala</a></b>
+  </p>
+    <a href="{% url 'add_survivor' %}" class="home-button card" role="button">
+        {% bootstrap_icon "plus" %}
+        <span class="text">
+            Add Survived Family <br>
+            <span class="ml small">രക്ഷപെട്ട കുടുംബത്തിന്റെ വിവരങ്ങൾ ചേർക്കാൻ </span>
+        </span>
+    </a>
+</div>
+{% endblock %}

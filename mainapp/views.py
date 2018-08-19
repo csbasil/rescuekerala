@@ -6,7 +6,7 @@ from django.views.generic.base import TemplateView
 from mainapp.redis_queue import sms_queue
 from mainapp.sms_handler import send_confirmation_sms
 from .models import Request, Volunteer, DistrictManager, Contributor, DistrictNeed, Person, RescueCamp, NGO, \
-    Announcements, ReliefCampData
+    Announcements, ReliefCampData, SurvivedFamily, FamilyMember
 import django_filters
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.http import JsonResponse
@@ -25,6 +25,8 @@ from django.urls import reverse
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from django.http import Http404
 from mainapp.admin import create_csv_response
+from django.forms.models import inlineformset_factory
+from django.db import transaction
 
 class CustomForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
@@ -381,7 +383,7 @@ class CampRequirementsForm(forms.ModelForm):
 class CampRequirements(SuccessMessageMixin,LoginRequiredMixin,UpdateView):
     login_url = '/login/'
     model = RescueCamp
-    template_name='mainapp/camp_requirements.html'  
+    template_name='mainapp/camp_requirements.html'
     form_class = CampRequirementsForm
     success_url = '/coordinator_home/'
     success_message = "Updated requirements saved!"
@@ -475,7 +477,7 @@ class CoordinatorCampFilter(django_filters.FilterSet):
             'district' : ['exact'],
             'name' : ['icontains']
         }
-    
+
     def __init__(self, *args, **kwargs):
         super(CoordinatorCampFilter, self).__init__(*args, **kwargs)
         if self.data == {}:
@@ -488,7 +490,7 @@ class CoordinatorCampFilter(django_filters.FilterSet):
             'district' : ['exact'],
             'name' : ['icontains']
         }
-    
+
     def __init__(self, *args, **kwargs):
         super(CoordinatorCampFilter, self).__init__(*args, **kwargs)
         if self.data == {}:
@@ -530,3 +532,40 @@ class AddCampData(CreateView):
     model = ReliefCampData
     fields = ['description', 'file', 'district', 'phone']
     success_url = '/submission_success/'
+class SurvivorsView(TemplateView):
+    template_name = "mainapp/survivors.html"
+
+class FamilyMemberForm(forms.ModelForm):
+    class Meta:
+       model = SurvivedFamily
+       fields = '__all__'
+    def __init__(self, *args, **kwargs):
+        super(FamilyMemberForm, self).__init__(*args, **kwargs) # Call to ModelForm constructor
+        self.fields['age'].widget.attrs['style'] = 'width:60px;'
+
+FamilyMemberFormSet = inlineformset_factory(SurvivedFamily,FamilyMember, form=FamilyMemberForm, extra=1)
+
+class SurvivorDetails(SuccessMessageMixin, CreateView):
+    model = SurvivedFamily
+    fields = '__all__'
+    template_name='mainapp/survivor_form.html'
+    success_url = '/add_survivor'
+    success_message = 'Survivor registered successfully'
+    def get_context_data(self, **kwargs):
+        data = super(SurvivorDetails, self).get_context_data(**kwargs)
+        if self.request.POST:
+            data['familymembers'] = FamilyMemberFormSet(self.request.POST)
+        else:
+            data['familymembers'] = FamilyMemberFormSet()
+        return data
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        familymembers = context['familymembers']
+        with transaction.atomic():
+            self.object = form.save()
+
+            if familymembers.is_valid():
+                familymembers.instance = self.object
+                familymembers.save()
+        return super(SurvivorDetails, self).form_valid(form)
