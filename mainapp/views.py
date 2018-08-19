@@ -356,8 +356,17 @@ class AddPerson(SuccessMessageMixin,LoginRequiredMixin,CreateView):
 
 
 class CampRequirementsForm(forms.ModelForm):
+
+
     class Meta:
        model = RescueCamp
+       help_texts = {
+            'food_req': 'Indicate the required items and approximate quantity',
+            'clothing_req': 'Indicate the required items and approximate quantity',
+            'medical_req': 'Indicate the required items and approximate quantity',
+            'sanitary_req': 'Indicate the required items and approximate quantity',
+            'other_req': 'Indicate the required items and approximate quantity',
+        }
        fields = [
         'name',
         'total_people',
